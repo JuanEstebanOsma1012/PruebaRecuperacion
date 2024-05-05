@@ -6,6 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 import time
 import random
 import string
+import json
 
 frases_de_prueba = [
     'hola mundo',
@@ -23,7 +24,20 @@ frases_de_prueba = [
 ]
 
 number_of_tests = 10
-test_passed = 0
+test_metrics = {
+    'main_1': {
+        'passed': 0,
+        'failed': 0,
+        'average_time': 0,
+        'total_time': 0
+    },
+    'main_2': {
+        'passed': 0,
+        'failed': 0,
+        'average_time': 0,
+        'total_time': 0
+    }
+}
 
 def obtener_cadena_aleatoria():
     return frases_de_prueba[random.randint(0, len(frases_de_prueba) - 1)]
@@ -99,9 +113,10 @@ def main_step_by_step():
 
     print('Test passed')
 
-def main():
+# close the tab
+def main_1():
     
-    driver = webdriver.Firefox()
+    driver = webdriver.Chrome()
     driver.get('http://127.0.0.1:5500/')
     input = driver.find_element(By.CLASS_NAME, 'input')
     text = obtener_cadena_aleatoria()
@@ -127,16 +142,83 @@ def main():
 
     driver.close()
 
+# refresh the page
+def main_2():
+    
+    driver = webdriver.Chrome()
+    driver.get('http://127.0.0.1:5500/')
+    input = driver.find_element(By.CLASS_NAME, 'input')
+    text = obtener_cadena_aleatoria()
+    expected = driver.execute_script(f"return encriptarTexto('{text}')")
+    input.send_keys(text)
+    button = driver.find_element(By.CLASS_NAME, 'encrypt')
+    button.click()
+    
+    time.sleep(1)
+
+    # refresh the page
+    driver.refresh()
+
+    time.sleep(1)
+
+    textResult = driver.find_element(By.CLASS_NAME, 'textResult')
+    resultado = driver.execute_script("return localStorage.getItem('resultado')")
+    assert textResult.text == resultado == expected
+
+    driver.close()
+
 def main_n_times(number_of_tests):
+
+    global test_metrics
+    total_time = 0
+
     for i in range(number_of_tests):
         try:
-            main()
-            global test_passed
-            test_passed += 1
+
+            # initial time
+            start_time = time.time()
+
+            main_1()
+
+            # final time
+            end_time = time.time()
+
+            total_time = end_time - start_time
+
+            test_metrics['main_1']['total_time'] += total_time
+            test_metrics['main_1']['passed'] += 1
+
+
         except Exception as e:
             print(e)
+            test_metrics['main_1']['failed'] += 1
 
-    print(f'{test_passed} tests passed of {number_of_tests}')
+    test_metrics['main_1']['average_time'] = test_metrics['main_1']['total_time'] / number_of_tests
+
+    for i in range(number_of_tests):
+        try:
+
+            # initial time
+            start_time = time.time()
+
+            main_2()
+
+            # final time
+            end_time = time.time()
+
+            total_time = end_time - start_time
+
+            test_metrics['main_2']['total_time'] += total_time
+            test_metrics['main_2']['passed'] += 1
+
+
+        except Exception as e:
+            print(e)
+            test_metrics['main_2']['failed'] += 1
+
+    test_metrics['main_2']['average_time'] = test_metrics['main_2']['total_time'] / number_of_tests
+
+    print(f'metrics {json.dumps(test_metrics, indent=4, sort_keys=True)}')
 
 if __name__ == '__main__':
-    main_step_by_step()
+    main_n_times(number_of_tests)
