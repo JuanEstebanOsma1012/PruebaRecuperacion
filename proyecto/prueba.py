@@ -30,8 +30,11 @@ def obtener_cadena_aleatoria():
 
 def main_step_by_step():
 
+    # options = webdriver.FirefoxOptions()
+    # options.binary_location = '/snap/firefox/4209/usr/lib/firefox/firefox'
+
     # Open the browser
-    driver = webdriver.Firefox()
+    driver = webdriver.Chrome()
     driver.get('http://127.0.0.1:5500/')
 
     # write text "hola mundo" in the input with class "input"
@@ -136,4 +139,4 @@ def main_n_times(number_of_tests):
     print(f'{test_passed} tests passed of {number_of_tests}')
 
 if __name__ == '__main__':
-    main_n_times(number_of_tests)
+    main_step_by_step()
